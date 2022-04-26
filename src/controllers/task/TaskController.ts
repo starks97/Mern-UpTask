@@ -58,7 +58,7 @@ async function getTask(
   return res.json(task);
 }
 async function updateTask(
-  req: Request & AuthUser ,
+  req: Request & AuthUser,
   res: Response,
   next: NextFunction
 ): Promise<object> {
@@ -77,9 +77,9 @@ async function updateTask(
   }
 
   task.name = req.body.name || task.name;
-  task.description = req.body.name || task.description;
-  task.priority = req.body.name || task.priority;
-  task.date = req.body.name || task.date;
+  task.description = req.body.description || task.description;
+  task.priority = req.body.priority || task.priority;
+  task.date = req.body.date || task.date;
 
   try {
     const setStoreTask = await task.save();

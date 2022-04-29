@@ -1,7 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { ErrorMessage } from "../helpers/message";
-import { IUser } from "../models/User";
 import { AuthUser } from "../types";
 import UserModel from "../models/User";
 

@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import ProjectSchema, { ProjectProps } from "../../models/Project";
 import { ErrorMessage, ErrorMessageFile } from "../../helpers/message";
-import { AuthUser, ProjectType } from "../../types";
+import { AuthUser } from "../../types";
 
 type E = unknown;
 

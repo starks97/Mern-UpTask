@@ -1,22 +1,23 @@
-import express, { Request, Response, NextFunction, response } from "express";
-import TaskSchema, { TaskProps } from "../../models/Task";
+import express, { Request, Response, NextFunction } from "express";
+import TaskSchema from "../../models/Task";
 import {
   ErrorMessage,
   ErrorMessageFile,
   ErrorTask,
 } from "../../helpers/message";
 import ProjectSchema, { ProjectProps } from "../../models/Project";
-import { AuthUser, ProjectType, TaskTypes } from "../../types";
+import { AuthUser, TaskTypes } from "../../types";
+import { TaskProps } from "../../models/Task";
 
-async function addNewTask(
-  req: ProjectType & AuthUser & Request,
+async function addNewTask<L extends ProjectProps>(
+  req: AuthUser & Request,
   res: Response,
   next: NextFunction
 ): Promise<object> {
-  const { project } = req;
+  const { project }: TaskProps  = req.body;
   const isProject = (await ProjectSchema.findOne({
     _id: project,
-  })) as ProjectType;
+  })) as TaskTypes<L>;
   if (!isProject) {
     return res.status(404).json({
       statusCode: 404,
@@ -37,14 +38,14 @@ async function addNewTask(
   }
 }
 async function getTask(
-  req: Request & AuthUser & ProjectType,
+  req: Request & AuthUser,
   res: Response,
   next: NextFunction
 ): Promise<object> {
   const { id } = req.params;
   const task = (await TaskSchema.findOne({ _id: id }).populate(
     "project"
-  )) as ProjectType;
+  )) as TaskProps;
   if (!task) {
     return res.status(404).json({
       statusCode: 404,
@@ -57,15 +58,16 @@ async function getTask(
 
   return res.json(task);
 }
-async function updateTask(
+
+async function updateTask<L extends ProjectProps>(
   req: Request & AuthUser,
   res: Response,
   next: NextFunction
-): Promise<object> {
+): Promise<object | TaskTypes<L>> {
   const { id } = req.params;
   const task = (await TaskSchema.findOne({ _id: id }).populate(
     "project"
-  )) as TaskProps;
+  )) as TaskTypes<L>;
   if (!task) {
     return res.status(404).json({
       statusCode: 404,
@@ -88,11 +90,32 @@ async function updateTask(
     console.log(err);
   }
 }
-async function deleteTask(
-  req: Request,
+async function deleteTask<L extends ProjectProps>(
+  req: Request & AuthUser,
   res: Response,
   next: NextFunction
-): Promise<void> {}
+): Promise<object | TaskTypes<L>> {
+  const { id } = req.params;
+  const removeTask = (await TaskSchema.findOne({ _id: id }).populate(
+    "project"
+  )) as TaskTypes<L>;
+  if (!removeTask) {
+    return res.status(404).json({
+      statusCode: 404,
+      msg: ErrorTask,
+    });
+  }
+  if (removeTask.project.owner.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ statusCode: 403, msg: ErrorMessageFile });
+  }
+
+  try {
+    await removeTask.deleteOne();
+    return res.status(200).json({ statusCode: 200, message: "Task deleted" });
+  } catch (err) {
+    console.log(err);
+  }
+}
 async function changeStatusTask(
   req: Request,
   res: Response,
